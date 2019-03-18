@@ -137,7 +137,7 @@ namespace AAPakEditor
                 lfiCreateTime.Text = "Created: " + DateTime.FromFileTime(pfi.createTime).ToString();
                 lfiModifyTime.Text = "Modified: " + DateTime.FromFileTime(pfi.modifyTime).ToString();
                 lfiStartOffset.Text = "Start Offset: 0x" + pfi.offset.ToString("X16");
-                lfiExtras.Text = "X 0x" + pfi.sizeDuplicate.ToString("X") + "  Z 0x" + pfi.zsize.ToString("X") + "  D1 0x" + pfi.dummy1.ToString("X") + "  D2 0x" + pfi.dummy2.ToString("X");
+                lfiExtras.Text = "X 0x" + pfi.sizeDuplicate.ToString("X") + "  Z 0x" + pfi.paddingSize.ToString("X") + "  D1 0x" + pfi.dummy1.ToString("X") + "  D2 0x" + pfi.dummy2.ToString("X");
             }
 
             Cursor.Current = Cursors.Default;
@@ -248,21 +248,6 @@ namespace AAPakEditor
                 pak.SaveHeader();
         }
 
-        private void MMFile_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void MMExport_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void MMExtra_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void MMFile_DropDownOpening(object sender, EventArgs e)
         {
             MMFileSave.Enabled = (pak != null) && (pak.isOpen) && (pak.isDirty);
@@ -278,6 +263,55 @@ namespace AAPakEditor
         private void MMExtra_DropDownOpening(object sender, EventArgs e)
         {
             MMExtraMD5.Enabled = (pak != null) && (pak.isOpen) && (lbFolders.SelectedIndex >= 0) && (lbFiles.SelectedIndex >= 0);
+            MMExtraExportData.Enabled = (pak != null) && (pak.isOpen);
+        }
+
+        private void MMExtraExportData_Click(object sender, EventArgs e)
+        {
+            if ((pak == null) || (!pak.isOpen))
+                return;
+
+            DateTime newest = new DateTime(1600, 1, 1);
+            
+            List<string> sl = new List<string>();
+            string s = "";
+            s = "name";
+            s += ";size";
+            s += ";offset";
+            s += ";md5";
+            s += ";createTime";
+            s += ";modifyTime";
+            s += ";sizeDuplicate";
+            s += ";paddingSize";
+            s += ";dummy1";
+            s += ";dummy2";
+            sl.Add(s);
+            foreach (AAPakFileInfo pfi in pak.files)
+            {
+                DateTime modTime = DateTime.FromFileTime(pfi.modifyTime);
+                if (modTime > newest)
+                    newest = modTime;
+
+                s = pfi.name;
+                s += ";" + pfi.size.ToString();
+                s += ";" + pfi.offset.ToString();
+                s += ";" + BitConverter.ToString(pfi.md5).Replace("-","").ToUpper();
+                s += ";" + DateTime.FromFileTime(pfi.createTime).ToString();
+                s += ";" + modTime.ToString();
+                s += ";" + pfi.sizeDuplicate.ToString();
+                s += ";" + pfi.paddingSize.ToString();
+                s += ";" + pfi.dummy1.ToString();
+                s += ";" + pfi.dummy2.ToString();
+                sl.Add(s);
+
+            }
+
+            exportFileDialog.FileName = "game_pak_files_"+ newest.ToString("yyyyMMdd")+".csv";
+
+            if (exportFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            File.WriteAllLines(exportFileDialog.FileName, sl);
         }
     }
 }
