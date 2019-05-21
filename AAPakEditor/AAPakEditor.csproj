@@ -8,11 +8,12 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>AAPakEditor</RootNamespace>
     <AssemblyName>AAPakEditor</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -23,8 +24,8 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <ApplicationRevision>1</ApplicationRevision>
-    <ApplicationVersion>0.1.0.%2a</ApplicationVersion>
+    <ApplicationRevision>2</ApplicationRevision>
+    <ApplicationVersion>0.3.1.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -55,10 +56,23 @@
     <ManifestKeyFile>AAPakEditor_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>true</GenerateManifests>
+    <GenerateManifests>false</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
-    <SignManifests>true</SignManifests>
+    <SignManifests>false</SignManifests>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>aapakeditor_icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -75,11 +89,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AAPak.cs" />
+    <Compile Include="ImportFolderDlg.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ImportFolderDlg.Designer.cs">
+      <DependentUpon>ImportFolderDlg.cs</DependentUpon>
+    </Compile>
     <Compile Include="ExportAllDlg.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="ExportAllDlg.Designer.cs">
       <DependentUpon>ExportAllDlg.cs</DependentUpon>
+    </Compile>
+    <Compile Include="AddFileDlg.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AddFileDlg.Designer.cs">
+      <DependentUpon>AddFileDlg.cs</DependentUpon>
     </Compile>
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
@@ -87,14 +113,29 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="MakeModForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MakeModForm.Designer.cs">
+      <DependentUpon>MakeModForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SubStream.cs" />
+    <EmbeddedResource Include="ImportFolderDlg.resx">
+      <DependentUpon>ImportFolderDlg.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ExportAllDlg.resx">
       <DependentUpon>ExportAllDlg.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="AddFileDlg.resx">
+      <DependentUpon>AddFileDlg.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MakeModForm.resx">
+      <DependentUpon>MakeModForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -104,9 +145,10 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="aa.bms" />
-    <None Include="AAPakEditor_TemporaryKey.pfx" />
+    <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -131,6 +173,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="aapakeditor_icon.ico" />
+    <Content Include="charge_package.ico" />
+    <None Include="Resources\AAMod.exe" />
+    <None Include="res\mod_example.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
