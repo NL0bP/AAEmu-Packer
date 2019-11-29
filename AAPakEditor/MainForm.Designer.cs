@@ -80,11 +80,15 @@
             this.tcDirectoryViews = new System.Windows.Forms.TabControl();
             this.tpTreeView = new System.Windows.Forms.TabPage();
             this.tpFlatDirView = new System.Windows.Forms.TabPage();
+            this.tpExtraFiles = new System.Windows.Forms.TabPage();
+            this.lbExtraFiles = new System.Windows.Forms.ListBox();
+            this.lTypePak = new System.Windows.Forms.Label();
             this.MM.SuspendLayout();
             this.pFileInfo.SuspendLayout();
             this.tcDirectoryViews.SuspendLayout();
             this.tpTreeView.SuspendLayout();
             this.tpFlatDirView.SuspendLayout();
+            this.tpExtraFiles.SuspendLayout();
             this.SuspendLayout();
             // 
             // MM
@@ -230,14 +234,14 @@
             this.MMExportS2,
             this.MMExportDB});
             this.MMExport.Name = "MMExport";
-            this.MMExport.Size = new System.Drawing.Size(52, 20);
+            this.MMExport.Size = new System.Drawing.Size(53, 20);
             this.MMExport.Text = "&Export";
             // 
             // MMExportSelectedFile
             // 
             this.MMExportSelectedFile.Name = "MMExportSelectedFile";
             this.MMExportSelectedFile.ShortcutKeys = System.Windows.Forms.Keys.F5;
-            this.MMExportSelectedFile.Size = new System.Drawing.Size(160, 22);
+            this.MMExportSelectedFile.Size = new System.Drawing.Size(180, 22);
             this.MMExportSelectedFile.Text = "Selected &File";
             this.MMExportSelectedFile.Click += new System.EventHandler(this.MMExportSelectedFile_Click);
             // 
@@ -245,32 +249,32 @@
             // 
             this.MMExportSelectedFolder.Enabled = false;
             this.MMExportSelectedFolder.Name = "MMExportSelectedFolder";
-            this.MMExportSelectedFolder.Size = new System.Drawing.Size(160, 22);
+            this.MMExportSelectedFolder.Size = new System.Drawing.Size(180, 22);
             this.MMExportSelectedFolder.Text = "Selected F&older";
             this.MMExportSelectedFolder.Click += new System.EventHandler(this.MMExportSelectedFolder_Click);
             // 
             // MMExportS1
             // 
             this.MMExportS1.Name = "MMExportS1";
-            this.MMExportS1.Size = new System.Drawing.Size(157, 6);
+            this.MMExportS1.Size = new System.Drawing.Size(177, 6);
             // 
             // MMExportAll
             // 
             this.MMExportAll.Name = "MMExportAll";
             this.MMExportAll.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F5)));
-            this.MMExportAll.Size = new System.Drawing.Size(160, 22);
+            this.MMExportAll.Size = new System.Drawing.Size(180, 22);
             this.MMExportAll.Text = "&All Files";
             this.MMExportAll.Click += new System.EventHandler(this.MMExportAll_Click);
             // 
             // MMExportS2
             // 
             this.MMExportS2.Name = "MMExportS2";
-            this.MMExportS2.Size = new System.Drawing.Size(157, 6);
+            this.MMExportS2.Size = new System.Drawing.Size(177, 6);
             // 
             // MMExportDB
             // 
             this.MMExportDB.Name = "MMExportDB";
-            this.MMExportDB.Size = new System.Drawing.Size(160, 22);
+            this.MMExportDB.Size = new System.Drawing.Size(180, 22);
             this.MMExportDB.Text = "Export DB";
             this.MMExportDB.Click += new System.EventHandler(this.MMExportDB_Click);
             // 
@@ -279,38 +283,37 @@
             this.MMExtra.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MMExtraMD5,
             this.MMExtraExportData,
-            this.MMExtraDebugTest,
-            this.MMExtraMakeMod});
+            this.MMExtraMakeMod,
+            this.MMExtraDebugTest});
             this.MMExtra.Name = "MMExtra";
-            this.MMExtra.Size = new System.Drawing.Size(44, 20);
+            this.MMExtra.Size = new System.Drawing.Size(45, 20);
             this.MMExtra.Text = "E&xtra";
             // 
             // MMExtraMD5
             // 
             this.MMExtraMD5.Name = "MMExtraMD5";
-            this.MMExtraMD5.Size = new System.Drawing.Size(205, 22);
+            this.MMExtraMD5.Size = new System.Drawing.Size(206, 22);
             this.MMExtraMD5.Text = "Re-Calculate MD5";
             this.MMExtraMD5.Click += new System.EventHandler(this.MMEXtraMD5_Click);
             // 
             // MMExtraExportData
             // 
             this.MMExtraExportData.Name = "MMExtraExportData";
-            this.MMExtraExportData.Size = new System.Drawing.Size(205, 22);
+            this.MMExtraExportData.Size = new System.Drawing.Size(206, 22);
             this.MMExtraExportData.Text = "Export File Data as CSV ...";
             this.MMExtraExportData.Click += new System.EventHandler(this.MMExtraExportData_Click);
             // 
             // MMExtraDebugTest
             // 
             this.MMExtraDebugTest.Name = "MMExtraDebugTest";
-            this.MMExtraDebugTest.Size = new System.Drawing.Size(205, 22);
+            this.MMExtraDebugTest.Size = new System.Drawing.Size(206, 22);
             this.MMExtraDebugTest.Text = "DebugTest";
-            this.MMExtraDebugTest.Visible = false;
             this.MMExtraDebugTest.Click += new System.EventHandler(this.MMExtraDebugTest_Click);
             // 
             // MMExtraMakeMod
             // 
             this.MMExtraMakeMod.Name = "MMExtraMakeMod";
-            this.MMExtraMakeMod.Size = new System.Drawing.Size(205, 22);
+            this.MMExtraMakeMod.Size = new System.Drawing.Size(206, 22);
             this.MMExtraMakeMod.Text = "Export pak as mod";
             this.MMExtraMakeMod.Click += new System.EventHandler(this.MMExtraMakeMod_Click);
             // 
@@ -353,7 +356,7 @@
             this.lbFolders.FormattingEnabled = true;
             this.lbFolders.Location = new System.Drawing.Point(3, 6);
             this.lbFolders.Name = "lbFolders";
-            this.lbFolders.Size = new System.Drawing.Size(319, 381);
+            this.lbFolders.Size = new System.Drawing.Size(245, 381);
             this.lbFolders.TabIndex = 1;
             this.lbFolders.SelectedIndexChanged += new System.EventHandler(this.lbFolders_SelectedIndexChanged);
             // 
@@ -496,6 +499,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tcDirectoryViews.Controls.Add(this.tpTreeView);
             this.tcDirectoryViews.Controls.Add(this.tpFlatDirView);
+            this.tcDirectoryViews.Controls.Add(this.tpExtraFiles);
             this.tcDirectoryViews.Location = new System.Drawing.Point(12, 35);
             this.tcDirectoryViews.Name = "tcDirectoryViews";
             this.tcDirectoryViews.SelectedIndex = 0;
@@ -524,11 +528,45 @@
             this.tpFlatDirView.Text = "Flat Folder View";
             this.tpFlatDirView.UseVisualStyleBackColor = true;
             // 
+            // tpExtraFiles
+            // 
+            this.tpExtraFiles.Controls.Add(this.lbExtraFiles);
+            this.tpExtraFiles.Location = new System.Drawing.Point(4, 22);
+            this.tpExtraFiles.Name = "tpExtraFiles";
+            this.tpExtraFiles.Padding = new System.Windows.Forms.Padding(3);
+            this.tpExtraFiles.Size = new System.Drawing.Size(251, 390);
+            this.tpExtraFiles.TabIndex = 2;
+            this.tpExtraFiles.Text = "Deleted Files";
+            this.tpExtraFiles.UseVisualStyleBackColor = true;
+            // 
+            // lbExtraFiles
+            // 
+            this.lbExtraFiles.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lbExtraFiles.FormattingEnabled = true;
+            this.lbExtraFiles.Location = new System.Drawing.Point(3, 5);
+            this.lbExtraFiles.Name = "lbExtraFiles";
+            this.lbExtraFiles.Size = new System.Drawing.Size(245, 381);
+            this.lbExtraFiles.TabIndex = 2;
+            this.lbExtraFiles.SelectedIndexChanged += new System.EventHandler(this.LbExtraFiles_SelectedIndexChanged);
+            // 
+            // lTypePak
+            // 
+            this.lTypePak.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lTypePak.Location = new System.Drawing.Point(472, 454);
+            this.lTypePak.Name = "lTypePak";
+            this.lTypePak.Size = new System.Drawing.Size(100, 16);
+            this.lTypePak.TabIndex = 9;
+            this.lTypePak.Text = "...";
+            this.lTypePak.TextAlign = System.Drawing.ContentAlignment.TopRight;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(584, 476);
+            this.Controls.Add(this.lTypePak);
             this.Controls.Add(this.tcDirectoryViews);
             this.Controls.Add(this.pFileInfo);
             this.Controls.Add(this.lFiles);
@@ -551,6 +589,7 @@
             this.tcDirectoryViews.ResumeLayout(false);
             this.tpTreeView.ResumeLayout(false);
             this.tpFlatDirView.ResumeLayout(false);
+            this.tpExtraFiles.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -609,6 +648,9 @@
         private System.Windows.Forms.ToolStripMenuItem MMExportDB;
         private System.Windows.Forms.ToolStripMenuItem MMVersionDiscord;
         private System.Windows.Forms.ToolStripMenuItem MMExtraMakeMod;
+        private System.Windows.Forms.TabPage tpExtraFiles;
+        private System.Windows.Forms.ListBox lbExtraFiles;
+        private System.Windows.Forms.Label lTypePak;
     }
 }
 

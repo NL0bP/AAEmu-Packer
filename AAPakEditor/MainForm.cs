@@ -1,16 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
-using System.Windows.Forms;
 using System.IO;
-using System.Threading;
-using SubStreamHelper;
+using System.Text;
+using System.Windows.Forms;
 
 namespace AAPakEditor
 {
@@ -45,7 +38,7 @@ namespace AAPakEditor
             MMExportSelectedFile.Enabled = (pak != null) && (pak.isOpen) && (lbFiles.SelectedIndex >= 0);
             MMExportSelectedFolder.Enabled = (pak != null) && (pak.isOpen) && (currentFileViewFolder != "");
             MMExportAll.Enabled = (pak != null) && (pak.isOpen);
-            MMExportDB.Enabled = (pak != null) && (pak.isOpen) && (lbFiles.SelectedIndex >= 0) && (useDBKey) && (Path.GetExtension(lbFiles.SelectedItem.ToString()) == ".sqlite3");
+            MMExportDB.Enabled = (pak != null) && (pak.isOpen) && (lbFiles.SelectedIndex >= 0) && (useDBKey) && (Path.GetExtension(lbFiles.SelectedItem.ToString()).StartsWith(".sql"));
             MMExportDB.Visible = (pak != null) && (pak.isOpen) && (useDBKey);
             MMExportS2.Visible = MMExportDB.Visible;
             MMExport.Visible = (pak != null) && (pak.isOpen);
@@ -106,7 +99,7 @@ namespace AAPakEditor
                 v += "." + AppVer.MinorRevision.ToString();
             MMVersion.Text = v ;
             UpdateMM();
-            // LoadPakFile("C:\\ArcheAge\\Working\\game_pak");
+            ShowFileInfo(null, 0);
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -132,6 +125,7 @@ namespace AAPakEditor
             lbFolders.Items.Clear();
             lbFiles.Items.Clear();
             tvFolders.Nodes.Clear();
+            lbExtraFiles.Items.Clear();
             TreeNode rootNode = tvFolders.Nodes.Add("", "root");
             TreeNode foundNode = null;
             var c = 0;
@@ -186,6 +180,10 @@ namespace AAPakEditor
             }
             rootNode.Expand();
             lFileCount.Text = pak.files.Count.ToString() + " files in " + pak.folders.Count.ToString() + " folders";
+            foreach(var pfi in pak.extraFiles)
+            {
+                lbExtraFiles.Items.Add(pfi.name);
+            }
             UpdateMM();
         }
 
@@ -227,8 +225,9 @@ namespace AAPakEditor
             }
         }
 
-        private void LoadPakFile(string filename, bool openAsReadOnly)
+        private void LoadPakFile(string filename, bool openAsReadOnly, bool showWriteWarning = true, bool quickLoad = false)
         {
+            lTypePak.Text = string.Empty;
             if (pak == null)
             {
                 pak = new AAPak("",true);
@@ -259,18 +258,19 @@ namespace AAPakEditor
                 lbFiles.Items.Clear();
                 UpdateMM();
                 if (useCustomKey)
-                    MessageBox.Show("Custom  game_pak.key  does not seem valid for " + openGamePakDialog.FileName,"OpenPak Key Error");
+                    MessageBox.Show("Custom  game_pak.key  does not seem valid for " + filename, "OpenPak Key Error");
                 else
-                    MessageBox.Show("Failed to open " + openGamePakDialog.FileName,"OpenPak Error");
+                    MessageBox.Show("Failed to open " + filename, "OpenPak Error");
             }
             else
             {
                 Text = baseTitle + " - " + pak._gpFilePath;
 
-                GenerateFolderViews();
+                if (!quickLoad)
+                    GenerateFolderViews();
 
                 // Only show this waring if this is not a new pak file
-                if ((openAsReadOnly == false) && (pak.files.Count > 0))
+                if ((openAsReadOnly == false) && (pak.files.Count > 0) && (showWriteWarning))
                 {
                     MessageBox.Show("!!! Warning !!!\r\n" +
                         "You have opened this pak in read/write mode !\r\n" +
@@ -278,12 +278,24 @@ namespace AAPakEditor
                         "This program comes with absolutly NO warranty.\r\n" +
                         "It is possible that this program will inreversably damage your game files while editing.\r\n" +
                         "Please be sure that you have a backup available of the pak file you are editing.\r\n" +
-                        "That being said, I did my best as to avoid possible damage (other than oderered by the user) caused by malfunctions.\r\n" +
+                        "That being said, I did my best as to avoid possible damage (other than odered by the user) caused by malfunctions.\r\n" +
+                        "\r\n" +
+                        "Also, I am in no way responsible for possible damage to the game or the account you will be playing as.\r\n" +
+                        "There are systems in place on the live servers to check the validity of the game files. \r\n" +
+                        "Please consider that chaning files as you can potentially get your account banned !\r\n" +
                         "\r\n" +
                         "Enjoy, and edit responsibly.\r\n" +
                         "~ ZeromusXYZ",
                         "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
+            }
+            if (pak.PakType != PakFileType.TypeA)
+            {
+                lTypePak.Text = pak.PakType.ToString();
+            }
+            else
+            {
+                lTypePak.Text = string.Empty ;
             }
 
         }
@@ -297,6 +309,52 @@ namespace AAPakEditor
             var d = (sender as ListBox).SelectedItem.ToString();
             PopulateFilesList(d);
             UpdateMM();
+        }
+
+        private void ShowFileInfo(AAPakFileInfo pfi,int index)
+        {
+            if (pfi != null)
+            {
+                if (index >= 0)
+                {
+                    lfiName.Text = pfi.name + " @index: " + index.ToString();
+                }
+                else
+                {
+                    lfiName.Text = pfi.name;
+                }
+                lfiSize.Text = "Size: " + pfi.size.ToString() + " byte(s)";
+                if (pfi.paddingSize > 0)
+                    lfiSize.Text += "  + " + pfi.paddingSize + " padding";
+
+                if (pfi.sizeDuplicate != pfi.size)
+                    lfiSize.Text += "  size mismatch " + pfi.sizeDuplicate + " byte(s)";
+
+                //var h = BitConverter.ToString(pfi.md5).ToUpper().Replace("-", "");
+                //if (h == pak._header.nullHashString)
+                if (Array.Equals(pfi.md5, AAPakFileHeader.nullHash))
+                {
+                        lfiHash.Text = "MD5: Invalid or not calculated !";
+                }
+                else
+                {
+                    lfiHash.Text = "MD5: " + BitConverter.ToString(pfi.md5).ToUpper().Replace("-", "");
+                }
+                lfiCreateTime.Text = "Created: " + DateTime.FromFileTime(pfi.createTime).ToString();
+                lfiModifyTime.Text = "Modified: " + DateTime.FromFileTime(pfi.modifyTime).ToString();
+                lfiStartOffset.Text = "Start Offset: 0x" + pfi.offset.ToString("X16");
+                lfiExtras.Text = "D1 0x" + pfi.dummy1.ToString("X") + "  D2 0x" + pfi.dummy2.ToString("X");
+            }
+            else
+            {
+                lfiName.Text = "<no file selected>";
+                lfiSize.Text = "";
+                lfiHash.Text = "";
+                lfiCreateTime.Text = "";
+                lfiModifyTime.Text = "";
+                lfiStartOffset.Text = "";
+                lfiExtras.Text = "";
+            }
         }
 
         private void lbFiles_SelectedIndexChanged(object sender, EventArgs e)
@@ -318,24 +376,7 @@ namespace AAPakEditor
             //if (pfi.name != "")
             if (pak.GetFileByName(d, ref pfi))
             {
-                lfiName.Text = pfi.name;
-                lfiSize.Text = "Size: " + pfi.size.ToString() + " byte(s)";
-                if (pfi.paddingSize > 0)
-                    lfiSize.Text += "  + " + pfi.paddingSize + " padding";
-
-                var h = BitConverter.ToString(pfi.md5).ToUpper().Replace("-", "");
-                if (h == pak._header.nullHashString)
-                {
-                    lfiHash.Text = "MD5: Invalid or not calculated !";
-                }
-                else
-                {
-                    lfiHash.Text = "MD5: " + BitConverter.ToString(pfi.md5).ToUpper().Replace("-", "");
-                }
-                lfiCreateTime.Text = "Created: " + DateTime.FromFileTime(pfi.createTime).ToString();
-                lfiModifyTime.Text = "Modified: " + DateTime.FromFileTime(pfi.modifyTime).ToString();
-                lfiStartOffset.Text = "Start Offset: 0x" + pfi.offset.ToString("X16");
-                lfiExtras.Text = "D1 0x" + pfi.dummy1.ToString("X") + "  D2 0x" + pfi.dummy2.ToString("X");
+                ShowFileInfo(pfi,-1);
             }
 
             UpdateMM();
@@ -357,7 +398,14 @@ namespace AAPakEditor
             var d = currentFileViewFolder ;
             if (d != "") d += "/";
             d += lbFiles.SelectedItem.ToString();
-            exportFileDialog.FileName = Path.GetFileName(d.Replace('/', Path.DirectorySeparatorChar));
+            try
+            {
+                exportFileDialog.FileName = Path.GetFileName(d.Replace('/', Path.DirectorySeparatorChar));
+            }
+            catch
+            {
+                exportFileDialog.FileName = "__invalid_name__";
+            }
 
             if (exportFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -487,7 +535,11 @@ namespace AAPakEditor
         {
             if ((pak == null) || (!pak.isOpen))
                 return;
+            CreateCSVFile();
+        }
 
+        private void CreateCSVFile(string filename = "")
+        {
             DateTime newest = new DateTime(1600, 1, 1);
             
             List<string> sl = new List<string>();
@@ -523,12 +575,15 @@ namespace AAPakEditor
 
             }
 
-            exportFileDialog.FileName = Path.GetFileName(pak._gpFilePath) + "_files_"+ newest.ToString("yyyyMMdd")+".csv";
-
-            if (exportFileDialog.ShowDialog() != DialogResult.OK)
-                return;
-
-            File.WriteAllLines(exportFileDialog.FileName, sl);
+            exportFileDialog.FileName = Path.GetFileName(pak._gpFilePath) + "_files_" + newest.ToString("yyyyMMdd") + ".csv";
+            if (filename == string.Empty)
+            {
+                if (exportFileDialog.ShowDialog() != DialogResult.OK)
+                    return;
+                else
+                    filename = exportFileDialog.FileName;
+            }
+            File.WriteAllLines(filename, sl);
         }
 
         private void MMEditReplace_Click(object sender, EventArgs e)
@@ -603,7 +658,15 @@ namespace AAPakEditor
             List<string> sl = new List<string>();
             foreach (AAPakFileInfo pfi in list)
             {
-                var f = Path.GetFileName(pfi.name);
+                string f = string.Empty;
+                try
+                {
+                    f = Path.GetFileName(pfi.name);
+                }
+                catch
+                {
+                    f = pfi.name;
+                }
                 // lbFiles.Items.Add(f);
                 sl.Add(f);
             }
@@ -632,6 +695,49 @@ namespace AAPakEditor
         {
             if ((pak == null) || (!pak.isOpen))
                 return;
+
+
+            var d = currentFileViewFolder;
+            if (d != "") d += "/";
+            d += lbFiles.SelectedItem.ToString();
+            exportFileDialog.FileName = Path.GetFileName(d.Replace('/', Path.DirectorySeparatorChar));
+
+            if (exportFileDialog.ShowDialog() != DialogResult.OK)
+                return;
+
+            var pfraw = pak.ExportFileAsStream(d);
+
+            FileStream fs = new FileStream(exportFileDialog.FileName, FileMode.Create);
+
+            MemoryStream pf = new MemoryStream();
+            pfraw.CopyTo(pf);
+
+            // Padding
+            while ((pf.Length % 16) != 0)
+                pf.WriteByte(0);
+
+            pf.Position = 0;
+
+            MemoryStream fsraw = new MemoryStream();
+            try
+            {
+                if (AAPakFileHeader.EncryptStreamAES(pf, fsraw, dbKey, false,true))
+                {
+                    fsraw.Position = 16;
+                    fsraw.CopyTo(fs);
+                    MessageBox.Show("ExportDB: Done","Export DB");
+                }
+                else
+                {
+                    MessageBox.Show("Decryption failed:\r\n"+AAPakFileHeader.LastAESError,"Error");
+                }
+            }
+            catch (Exception x)
+            {
+                MessageBox.Show("Exception: " + x.Message);
+            }
+            fs.Dispose();
+            // ms.Dispose();
 
             UpdateMM();
         }
@@ -788,6 +894,7 @@ namespace AAPakEditor
             Cursor.Current = Cursors.Default;
             Application.UseWaitCursor = false;
             UpdateMM();
+            ShowFileInfo(null, 0);
         }
 
         private void MMFileNew_Click(object sender, EventArgs e)
@@ -859,26 +966,28 @@ namespace AAPakEditor
 
         private void MMEditImportFiles_Click(object sender, EventArgs e)
         {
-            ImportFolderDlg importFolder = new ImportFolderDlg();
-            importFolder.ePakFolder.Text = currentFileViewFolder;
-            importFolder.eDiskFolder.Text = Path.GetDirectoryName(pak._gpFilePath);
-            importFolder.pak = this.pak;
-            try
+            using (ImportFolderDlg importFolder = new ImportFolderDlg())
             {
-                if (importFolder.ShowDialog() == DialogResult.OK)
+
+                importFolder.ePakFolder.Text = currentFileViewFolder;
+                importFolder.eDiskFolder.Text = Path.GetDirectoryName(pak._gpFilePath);
+                importFolder.pak = this.pak;
+                try
                 {
-                    GenerateFolderViews();
-                    PopulateFilesList(currentFileViewFolder);
+                    if (importFolder.ShowDialog() == DialogResult.OK)
+                    {
+                        GenerateFolderViews();
+                        PopulateFilesList(currentFileViewFolder);
+                    }
+                }
+                catch (Exception x)
+                {
+                    MessageBox.Show("ERROR: " + x.Message + " \r\n\r\nDo not forget to save your file to prevent further corruption !",
+                        "Exception",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Error);
                 }
             }
-            catch (Exception x)
-            {
-                MessageBox.Show("ERROR: " + x.Message+" \r\n\r\nDo not forget to save your file to prevent further corruption !", 
-                    "Exception", 
-                    MessageBoxButtons.OK, 
-                    MessageBoxIcon.Error);
-            }
-            importFolder.Dispose();
             UpdateMM();
         }
 
@@ -901,31 +1010,26 @@ namespace AAPakEditor
                 return;
 
             var pf = pak.ExportFileAsStream(d);
-            MemoryStream ms = new MemoryStream();
-            pf.CopyTo(ms);
-            pf.Dispose();
-
-            ms.Position = 0;
-            
 
             FileStream fs = new FileStream(exportFileDialog.FileName, FileMode.Create);
-            while (ms.Position < ms.Length)
+            try
             {
-                var rest = (int)(ms.Length - ms.Position);
-                // reading blocks doesn't end to well, comment for now :p
-                /*
-                if (rest > 4096)
-                    rest = 4096;
-                */
-                byte[] buf = new byte[rest];
-                byte[] decBuf = new byte[rest];
-                ms.Read(buf, 0, rest);
-                decBuf = AAPakFileHeader.EncryptAES(buf, dbKey, false);
-                fs.Write(decBuf, 0, decBuf.Length);
+                AAPakFileHeader.LastAESError = string.Empty;
+                if (AAPakFileHeader.EncryptStreamAES(pf,fs,dbKey,false))
+                {
+                    MessageBox.Show("ExportDB: Done");
+                }
+                else
+                {
+                    MessageBox.Show("Decryption failed:\r\n" + AAPakFileHeader.LastAESError, "Error");
+                }
+            }
+            catch (Exception x)
+            {
+                MessageBox.Show("Exception: " + x.Message);
             }
             fs.Dispose();
-            ms.Dispose();
-            MessageBox.Show("Debug: Done");
+            // ms.Dispose();
             UpdateMM();
         }
 
@@ -954,15 +1058,275 @@ namespace AAPakEditor
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
+            // Returns true if commandline requests that we are done
+            if (HandleCommandLine())
+                Close();
+        }
+
+        private void LbExtraFiles_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if ((pak == null) || (!pak.isOpen))
+                return;
+
+            lbFiles.Items.Clear();
+            lFiles.Text = "";
+            var d = (sender as ListBox).SelectedIndex;
+            if ((d >= 0) && (d < pak.extraFiles.Count))
+            {
+                ShowFileInfo(pak.extraFiles[d],d);
+                
+            }
+            UpdateMM();
+        }
+
+        private bool HandleCommandLine()
+        {
+            Application.UseWaitCursor = true;
+            Cursor.Current = Cursors.WaitCursor;
+            bool closeWhenDone = false;
+
+            string cmdErrors = string.Empty;
             var args = Environment.GetCommandLineArgs();
-            for(int i = 1; i < args.Length;i++)
+            for (int i = 1; i < args.Length; i++)
             {
                 var arg = args[i];
+                var arg1 = "";
+                var arg2 = "";
+                if (i + 1 < args.Length)
+                    arg1 = args[i + 1];
+                if (i + 2 < args.Length)
+                    arg2 = args[i + 2];
+
+                if ((arg == "-o") || (arg == "+o"))
+                {
+                    i++; // take one arg
+                    if (pak != null)
+                        pak.ClosePak();
+                    LoadPakFile(arg1, false, false,true);
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Failed to open for r/w: " + arg1 + "\r\n";
+                    }
+                }
+                else
+
+                if (arg == "+c")
+                {
+                    i++; // take one arg
+
+                    if (pak != null)
+                        pak.ClosePak();
+                    // Create and a new pakfile
+                    pak = new AAPak(arg1, false, true);
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Failed to created file: " + arg1 + "\r\n";
+                        continue;
+                    }
+                    pak.ClosePak();
+                    // Re-open it in read/write mode
+                    LoadPakFile(arg1, false, false, true);
+
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Failed to re-open created file: " + arg1 + "\r\n";
+                    }
+                }
+                else
+
+                if (arg == "+sfx")
+                {
+                    i++;
+                    if ((pak == null) || (!pak.isOpen) || (pak.readOnly))
+                    {
+                        cmdErrors += "Pak file needs to be opened in read/write mode to be able to add a mod installer !\r\n";
+                    }
+                    else
+                    {
+                        // add MODSFX
+                        MemoryStream sfxStream = new MemoryStream(Properties.Resources.AAModSFX);
+                        // We will be possibly be editing the icon, so it's a good idea to have some spare space here
+                        if (!pak.AddFileFromStream(MakeModForm.SFXInfoFileName, sfxStream, DateTime.Now, DateTime.Now, true, out _))
+                        {
+                            cmdErrors += "Failed to add SFX executable\r\n";
+                        }
+
+                        if (File.Exists(arg1))
+                        {
+                            if (!pak.AddFileFromFile(arg1,MakeModForm.ModInfoFileName,false))
+                            {
+                                cmdErrors += "Failed to add SFX description file: \r\n" + arg1 ;
+                            }
+                        }
+                        else
+                        {
+                            // Consider the provided arg as a name
+                            MemoryStream modDescStream = new MemoryStream();
+                            var descBytes = Encoding.UTF8.GetBytes(arg1);
+                            modDescStream.Write(descBytes, 0, descBytes.Length);
+                            modDescStream.Position = 0;
+
+                            if (!pak.AddFileFromStream(MakeModForm.ModInfoFileName, modDescStream,DateTime.Now,DateTime.Now,false,out _))
+                            {
+                                cmdErrors += "Failed to add SFX description text: \r\n" + arg1;
+                            }
+
+                        }
+                    }
+                }
+                else
+
+                if (arg == "+f")
+                {
+                    i += 2; // take two args
+                    if ((pak == null) || (!pak.isOpen) || (pak.readOnly))
+                    {
+                        cmdErrors += "Pak file needs to be opened in read/write mode to be able to add a file !\r\n";
+                    }
+                    else
+                    {
+                        if (!pak.AddFileFromFile(arg1, arg2,false))
+                        {
+                            cmdErrors += "Failed to add file:\r\n" + arg1+"\r\n=>"+arg2+"\r\n";
+                        }
+                    }
+                }
+                else
+
+                if (arg == "-f")
+                {
+                    i++; // take one arg
+                    if ((pak == null) || (!pak.isOpen) || (pak.readOnly))
+                    {
+                        cmdErrors += "Pak file needs to be opened in read/write mode to be able to delete a file !\r\n";
+                    }
+                    else
+                    {
+                        if (!pak.DeleteFile(arg1))
+                        {
+                            // Technically, this could never fail as it only can return false if it's in read-only
+                            cmdErrors += "Failed to delete file:\r\n" + arg1 ;
+                        }
+                    }
+                }
+                else
+
+                if ((arg == "-s") || (arg == "+s"))
+                {
+                    if ((pak == null) || (!pak.isOpen) || (pak.readOnly))
+                    {
+                        cmdErrors += "Pak file needs to be opened in read/write mode to be able save it !\r\n";
+                    }
+                    else
+                    {
+                        pak.SaveHeader();
+                    }
+                }
+                else
+
+                if (arg == "+d")
+                {
+                    i += 2; // take two args
+                    if ((pak == null) || (!pak.isOpen) || (pak.readOnly))
+                    {
+                        cmdErrors += "Pak file needs to be opened in read/write mode to be able to add a file !\r\n";
+                    }
+                    else
+                    {
+                        using (ImportFolderDlg importFolder = new ImportFolderDlg())
+                        {
+
+                            importFolder.pak = this.pak;
+                            importFolder.InitAutoRun(arg1, arg2);
+                            try
+                            {
+                                if (importFolder.ShowDialog() != DialogResult.OK)
+                                {
+                                    cmdErrors += "Possible errors while adding directory\r\n" + arg1 + "\r\n=>\r\n"+arg2;
+                                }
+                            }
+                            catch (Exception x)
+                            {
+                                cmdErrors += "EXCEPTION: " + x.Message + " \r\nPossible file corruption !" ;
+                            }
+                        }
+                    }
+                }
+                else
+
+                if ((arg == "-x") || (arg == "+x"))
+                {
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Pak file needs to be opened before you can close it !\r\n";
+                    }
+                    else
+                    {
+                        pak.ClosePak();
+                    }
+                    if (arg == "+x")
+                        closeWhenDone = true;
+                }
+                else
+
+                if ((arg == "-m") || (arg == "+m"))
+                {
+                    i++;
+                    MessageBox.Show(arg1, "Command-Line Message", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                }
+                else
+
+                if (arg == "-csv")
+                {
+                    i++; // take one arg
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Pak file needs to be opened to be able generate a CSV file !\r\n";
+                    }
+                    else
+                    {
+                        CreateCSVFile(arg1);
+                    }
+                }
+                else
+
+                if ((arg == "-h") || (arg == "--h") || (arg == "--help") || (arg == "-help") || (arg == "-?") || (arg == "--?") || (arg == "/?") || (arg == "/help"))
+                {
+                    MessageBox.Show(Properties.Resources.cmdhelp, "Command-Line Help", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    closeWhenDone = true;
+                }
+                else
+
                 if (File.Exists(arg))
                 {
-                    LoadPakFile(arg, true);
+                    // Open file in read-only mode if nothing is specified and it's a valid filename
+                    if (pak != null)
+                        pak.ClosePak();
+                    LoadPakFile(arg, true, true, true);
+                    if ((pak == null) || (!pak.isOpen))
+                    {
+                        cmdErrors += "Failed to open: " + arg + "\r\n";
+                    }
+                }
+                else
+                {
+                    cmdErrors += "Unknown command or filename: " + arg + "\r\n";
                 }
             }
+
+            if (cmdErrors != string.Empty)
+            {
+                MessageBox.Show(cmdErrors, "Command-Line Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            if ((pak != null) && (pak.isOpen))
+            {
+                GenerateFolderViews();
+            }
+
+            Application.UseWaitCursor = false;
+            Cursor.Current = Cursors.Default;
+            return closeWhenDone;
         }
     }
 }
